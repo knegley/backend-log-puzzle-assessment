@@ -27,17 +27,24 @@ def read_urls(filename: str, /) -> list:
     alphabetically in increasing order, and screening out duplicates.
     """
     # +++your code here+++
-    pattern = re.compile(r"(?P<tail>\S+/[a-z]\S+)")
+
+    # old pattern that didn't check for puzzle key to sort"""
+    # pattern = re.compile(r"(?P<tail>\S+\/[a-z]\S+)")
+
+    # new pattern below to try to test animal or place
+    p = re.compile(
+        r"(?P<tail>\S+\/[a-z]\S+(?P<puzzle_key>\/\w-\w+-\w+|\/\w-\w+).\w+)")
     head = "http://code.google.com"
     with open(filename)as f:
         result = (f.read().splitlines())
-    # print(result)
+    # print(result[3])
+    # print(p.search(result[3]).groups())
     # print(pattern.search(result[0]).group("tail"))
     # print(pattern.search(test)[0])
     # print("puzzle" in result[0])
     puzzle_pieces = {head+match.group("tail")
                      for piece in result
-                     if (match := pattern.search(piece))
+                     if (match := p.search(piece))
                      and "puzzle" in piece}
     # print(puzzle_pieces)
     # print(sorted(puzzle_pieces))
@@ -61,7 +68,7 @@ def download_images(img_urls: list, dest_dir: str, /) ->None:
         print("creating directory.....")
         # directory = (os.path.join(os.getcwd(), "imgs"))
         # os.mkdir(directory)
-        os.mkdir((os.path.join(os.getcwd(), dest_dir)))
+        os.mkdir((os.path.join(directory)))
 
     except FileExistsError as error:
         print(f"{error=}")
@@ -71,14 +78,13 @@ def download_images(img_urls: list, dest_dir: str, /) ->None:
     print("downloading images ....")
     for index, image in enumerate(img_urls):
         urllib.request.urlretrieve(
-            image, filename=os.path.join(directory, f"img{index}"))
+            image, filename=os.path.join(directory, f"img{index}.jpg"))
     print("finished")
 
-
-with os.scandir(os.getcwd()+"/testing") as d:
-    files = [f.name for f in d]
-    # print(files)
-    print(sorted(files, key=lambda string: int(string[3:])))
+    with os.scandir(directory) as d:
+        files = [f.name for f in d]
+        # print(files)
+        print(sorted(files, key=lambda string: int(string[3:-4])))
 
 
 def create_parser():
@@ -92,15 +98,14 @@ def create_parser():
     return parser
 
 
-def main(args):
+def main():
     """Parses args, scans for URLs, gets images from URLs."""
     parser = create_parser()
+    parsed_args = parser.parse_args()
 
-    if not args:
+    if not parsed_args:
         parser.print_usage()
         sys.exit(1)
-
-    parsed_args = parser.parse_args(args)
 
     img_urls = read_urls(parsed_args.logfile)
 
@@ -111,4 +116,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
