@@ -21,16 +21,30 @@ import urllib.request
 import argparse
 
 
-def read_urls(filename):
+def read_urls(filename: str, /) -> list:
     """Returns a list of the puzzle URLs from the given log file,
     extracting the hostname from the filename itself, sorting
     alphabetically in increasing order, and screening out duplicates.
     """
     # +++your code here+++
-    pass
+    pattern = re.compile(r"(?P<tail>\S+/[a-z]\S+)")
+    head = "http://code.google.com"
+    with open(filename)as f:
+        result = (f.read().splitlines())
+    # print(result)
+    # print(pattern.search(result[0]).group("tail"))
+    # print(pattern.search(test)[0])
+    # print("puzzle" in result[0])
+    puzzle_pieces = {head+match.group("tail")
+                     for piece in result
+                     if (match := pattern.search(piece))
+                     and "puzzle" in piece}
+    # print(puzzle_pieces)
+    # print(sorted(puzzle_pieces))
+    return sorted(puzzle_pieces)
 
 
-def download_images(img_urls, dest_dir):
+def download_images(img_urls: list, dest_dir: str, /) ->None:
     """Given the URLs already in the correct order, downloads
     each image into the given directory.
     Gives the images local filenames img0, img1, and so on.
@@ -38,8 +52,33 @@ def download_images(img_urls, dest_dir):
     to show each local image file.
     Creates the directory if necessary.
     """
+
     # +++your code here+++
-    pass
+
+    # (head, tail) = os.path.split(os.getcwd())
+    directory = (os.path.join(os.getcwd(), dest_dir))
+    try:
+        print("creating directory.....")
+        # directory = (os.path.join(os.getcwd(), "imgs"))
+        # os.mkdir(directory)
+        os.mkdir((os.path.join(os.getcwd(), dest_dir)))
+
+    except FileExistsError as error:
+        print(f"{error=}")
+
+    finally:
+        print("done =)")
+    print("downloading images ....")
+    for index, image in enumerate(img_urls):
+        urllib.request.urlretrieve(
+            image, filename=os.path.join(directory, f"img{index}"))
+    print("finished")
+
+
+with os.scandir(os.getcwd()+"/testing") as d:
+    files = [f.name for f in d]
+    # print(files)
+    print(sorted(files, key=lambda string: int(string[3:])))
 
 
 def create_parser():
@@ -47,7 +86,8 @@ def create_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--todir',
                         help='destination directory for downloaded images')
-    parser.add_argument('logfile', help='apache logfile to extract urls from')
+    parser.add_argument(
+        'logfile', help='apache logfile to extract urls from')
 
     return parser
 
