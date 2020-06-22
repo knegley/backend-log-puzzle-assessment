@@ -38,17 +38,28 @@ def read_urls(filename: str, /) -> list:
     with open(filename)as f:
         result = (f.read().splitlines())
     # print(result[3])
-    # print(p.search(result[3]).groups())
+    print(result[0])
+    print(p.search(result[1]).group("puzzle_key")[-4:])
     # print(pattern.search(result[0]).group("tail"))
     # print(pattern.search(test)[0])
     # print("puzzle" in result[0])
+
+    # testing puzzle keys
+    # keys = ["/p-bjab-bbih", "/a-aaaa"]
+    # a_key, p_key = keys
+    # print(sorted(keys, key=lambda key: key[-4:]))
+
+    #####
+    # print(sorted(result, key=lambda p_key: p_key= p_key= p.search(
+    #     p_key).group("puzzle_key")[-4:]))
+
     puzzle_pieces = {head+match.group("tail")
                      for piece in result
                      if (match := p.search(piece))
                      and "puzzle" in piece}
     # print(puzzle_pieces)
     # print(sorted(puzzle_pieces))
-    return sorted(puzzle_pieces)
+    return sorted(puzzle_pieces, key=lambda p_key: p_key[-8:-4])
 
 
 def download_images(img_urls: list, dest_dir: str, /) ->None:
@@ -82,9 +93,22 @@ def download_images(img_urls: list, dest_dir: str, /) ->None:
     print("finished")
 
     with os.scandir(directory) as d:
-        files = [f.name for f in d]
+        files = sorted([f.name for f in d],
+                       key=lambda string: int(string[3:-4]))
         # print(files)
-        print(sorted(files, key=lambda string: int(string[3:-4])))
+        # print(sorted(files, key=lambda string: int(string[3:-4])))
+    img_tags = [f"<img src={os.path.relpath(f)}>" for f in files]
+
+    html = f"""
+<html>
+<body>
+{"".join(img_tags)}
+</body>
+</html>"""
+
+    index_html = os.path.join(directory, "index.html")
+    with open(index_html, "w") as index:
+        index.write(html)
 
 
 def create_parser():
